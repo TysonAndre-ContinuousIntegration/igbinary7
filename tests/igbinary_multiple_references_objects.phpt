@@ -7,6 +7,7 @@ igbinary.compact_strings = On
 <?php
 class Foo{}
 $a = new stdClass();
+$a->x0 = NULL;
 $a->x1 = &$a->x0;
 $a->x2 = &$a->x1;
 $a->x3 = &$a->x2;
@@ -23,6 +24,7 @@ $a->x12 = $a->x9;
 
 $ig_ser = igbinary_serialize($a);
 printf("ig_ser=%s\n", bin2hex($ig_ser));
+
 $ig = igbinary_unserialize($ig_ser);
 $f = &$ig->x3;
 $f = 'V';
