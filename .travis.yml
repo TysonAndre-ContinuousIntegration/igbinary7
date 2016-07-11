@@ -20,10 +20,8 @@ install:
 script:
   - phpize
   - ./configure --enable-igbinary
-  # Fix not failing makes in php 5.2 and 5.3
-  - perl -i -pe 's/\-\@if/\@if/' Makefile
   - make
-  - REPORT_EXIT_STATUS=1 NO_INTERACTION=1 make test
+  - REPORT_EXIT_STATUS=1 NO_INTERACTION=1 make test TESTS="--show-diff --show-out"
 
 branches:
   only:
