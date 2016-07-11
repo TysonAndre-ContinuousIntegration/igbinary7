@@ -1133,17 +1133,17 @@ inline static int igbinary_serialize_array_ref(struct igbinary_serialize_data *i
           printf("\nSerializing object=true key(object handle)=%lld\n", (long long) key);
 #endif
 	} else if (is_ref) {
-	  key = (zend_ulong) (zend_uintptr_t) Z_COUNTED_P(z);
-	  if (Z_TYPE_P(Z_REFVAL_P(z)) == IS_OBJECT) {
-	  	is_object = true;
-	  }
+	  	key = (zend_ulong) (zend_uintptr_t) z;
+	  	if (Z_TYPE_P(Z_REFVAL_P(z)) == IS_OBJECT) {
+	  		is_object = true;
+	  	}
 #ifdef DEBUG_SERIALIZATION
           printf("\nUsing regular ref is_ref=%d type=%d key=%lld\n", (int)Z_ISREF_P(z), (int)Z_TYPE_P(z), (long long) key);
 #endif
 	/* } */
 	} else if (Z_TYPE_P(z) == IS_ARRAY) {
 		// igbinary_serialize_array calls this, whether or not this is a reference or not.
-		key = (zend_ulong) (zend_uintptr_t) Z_ARR_P(z);
+		key = (zend_ulong) (zend_uintptr_t) z;
 	} else {
 		// Nothing else is going to reference this when this is serialized, this isn't ref counted or an object. Increment the reference id for the deserializer, give up.
 		++igsd->references_id;
