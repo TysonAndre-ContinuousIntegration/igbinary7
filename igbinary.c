@@ -1119,7 +1119,7 @@ inline static int igbinary_serialize_array_ref(struct igbinary_serialize_data *i
 	/* If I do, then more tests fail. */
 	/* is_ref || IS_OBJECT implies it has a unique refcounted struct */
 	if (object && Z_TYPE_P(z) == IS_OBJECT) {
-          key = (zend_ulong) Z_OBJ_HANDLE_P(z); // expand uint32_t to long
+          key = (zend_ulong) Z_OBJ_HANDLE_P(z); /* expand uint32_t to long */
 	} else if (is_ref) {
 		/* NOTE: PHP removed switched from `zval*` to `zval` for the values stored in HashTables. If an array has two references to the same ZVAL, then those references will have different zvals. We use Z_COUNTED_P(ref), which will be the same iff the references are the same */
 	  	/* IS_REF implies there is a unique reference counting pointer for the reference */
@@ -1144,7 +1144,7 @@ inline static int igbinary_serialize_array_ref(struct igbinary_serialize_data *i
 		/* because that's the way it was serialized in php5. */
 		/* Does this work with different forms of recursive arrays? */
 		if (t > 0 || object) {
-			hash_si_insert(&igsd->references, (const char*) &key, sizeof(key), t);  // TODO: Add a specialization for fixed-length numeric keys?
+			hash_si_insert(&igsd->references, (const char*) &key, sizeof(key), t);  /* TODO: Add a specialization for fixed-length numeric keys? */
 		}
 		return 1;
 	} else {
@@ -2286,11 +2286,11 @@ inline static int igbinary_unserialize_object(struct igbinary_unserialize_data *
 			r = 1;
 	}
 
-	// If unserialize was successful, call __wakeup if __wakeup exists for this object.
+	/* If unserialize was successful, call __wakeup if __wakeup exists for this object. */
 	if (r == 0) {
 		zval *ztemp = IGB_REF_VAL(igsd, ref_n);
 		zend_class_entry *ztemp_ce;
-		if (Z_ISREF_P(ztemp)) {  // May have created a reference while deserializing an object, if it was recursive.
+		if (Z_ISREF_P(ztemp)) {  /* May have created a reference while deserializing an object, if it was recursive. */
 			ztemp = Z_REFVAL_P(ztemp);
 		}
 		if (Z_TYPE_P(ztemp) != IS_OBJECT) {
@@ -2401,7 +2401,7 @@ static int igbinary_unserialize_zval(struct igbinary_unserialize_data *igsd, zva
 				return 1;
 			}
 
-			// If it is already a ref, nothing to do
+			/* If it is already a ref, nothing to do */
 			if (Z_ISREF_P(z)) {
 				break;
 			}
