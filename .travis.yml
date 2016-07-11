@@ -1,6 +1,7 @@
 language: php
 php:
   - 7.0
+  - nightly
 
 env:
   - CC=clang   CFLAGS=""
@@ -27,4 +28,3 @@ script:
 branches:
   only:
     - master
-    - php7-dev
