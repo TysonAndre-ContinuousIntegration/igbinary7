@@ -1128,7 +1128,7 @@ inline static int igbinary_serialize_array_ref(struct igbinary_serialize_data *i
 #endif
 	} else if (is_ref) {
 	  key = (zend_ulong) (zend_uintptr_t) Z_COUNTED_P(z);
-	  if (Z_TYPE_P(Z_DEREF_P(z)) == IS_OBJECT) {
+	  if (Z_TYPE_P(Z_REFVAL_P(z)) == IS_OBJECT) {
 	  	is_object = true;
 	  }
 #ifdef DEBUG_SERIALIZATION
