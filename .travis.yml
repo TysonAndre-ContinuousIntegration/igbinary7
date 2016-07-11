@@ -2,12 +2,6 @@ language: php
 php:
   - 7.0
 
-env:
-  - CC=clang   CFLAGS=""
-  - CC=clang   CFLAGS="-g -O0"
-  - CC=gcc-4.6 CFLAGS=""
-  - CC=gcc-4.6 CFLAGS="-g -O0 -fstack-protector -fstack-protector-all"
-  - CC=gcc-4.6 CFLAGS="-g" VALGRIND=1
 
 install:
   - sudo apt-get update -qq
@@ -18,6 +12,7 @@ install:
   - $CC --version
 
 script:
+  - export CC=gcc-4.6 CFLAGS="-g -O0 -fstack-protector -fstack-protector-all"
   - phpize
   - ./configure --enable-igbinary
   - make
