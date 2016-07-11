@@ -1116,7 +1116,7 @@ inline static int igbinary_serialize_array_ref(struct igbinary_serialize_data *i
 	// Similar to php_var_serialize_intern's first part, as well as php_add_var_hash, for printing R: (reference) or r:(object)
 	// However, it differs from the built in serialize() in that references to objects are preserved when serializing and unserializing? (TODO check, test for backwards compatibility)
 	zend_bool is_ref = Z_ISREF_P(z);
-	zend_bool is_object = ;
+	zend_bool is_object = Z_TYPE_P(z) == IS_OBJECT;
 	// Do I have to dereference object references so that reference ids will be the same as in php5?
 	// If I do, then more tests fail.
 	// is_ref || IS_OBJECT implies it has a unique refcounted struct
