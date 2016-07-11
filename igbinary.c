@@ -403,19 +403,19 @@ static inline size_t igsd_append_ref(struct igbinary_unserialize_data *igsd, zva
 /* {{{ Memory allocator wrappers */
 static inline void *igbinary_mm_wrapper_malloc(size_t size, void *context)
 {
-    (void)context;  // context is unused in this implementation, suppress warning.
+    (void)context;  /* context is unused in this implementation, suppress compiler warning. */
     return emalloc(size);
 }
 
 static inline void *igbinary_mm_wrapper_realloc(void *ptr, size_t size, void *context)
 {
-    (void)context;  // context is unused in this implementation, suppress warning.
+    (void)context;  /* context is unused in this implementation, suppress compiler warning. */
     return erealloc(ptr, size);
 }
 
 static inline void igbinary_mm_wrapper_free(void *ptr, void *context)
 {
-    (void)context;  // context is unused in this implementation, suppress warning.
+    (void)context;  /* context is unused in this implementation, suppress warning. */
     return efree(ptr);
 }
 /* }}} */
@@ -955,8 +955,6 @@ inline static int igbinary_serialize_string(struct igbinary_serialize_data *igsd
 				return 1;
 			}
 		}
-		// FIXME: technically, 64-bit strings are allowed in php7, but it's not as if you can store gigabytes in memcache.
-		// Throw an error if a string is too long?
 	}
 
 	return 0;
@@ -989,8 +987,6 @@ inline static int igbinary_serialize_chararray(struct igbinary_serialize_data *i
 		if (igbinary_serialize32(igsd, len TSRMLS_CC) != 0) {
 			return 1;
 		}
-		// FIXME: technically, 64-bit strings are allowed in php7, but it's not as if you can store gigabytes in memcache.
-		// Throw an error if a string is too long?
 	}
 
 	if (igbinary_serialize_resize(igsd, len TSRMLS_CC)) {
@@ -1006,8 +1002,8 @@ inline static int igbinary_serialize_chararray(struct igbinary_serialize_data *i
 /* {{{ igbinay_serialize_array */
 /** Serializes array or objects inner properties. */
 inline static int igbinary_serialize_array(struct igbinary_serialize_data *igsd, zval *z, bool object, bool incomplete_class TSRMLS_DC) {
-	// If object=true: z is IS_OBJECT
-	// If object=false: z is either IS_ARRAY, or IS_REFERENCE pointing to an IS_ARRAY.
+	/* If object=true: z is IS_OBJECT */
+	/* If object=false: z is either IS_ARRAY, or IS_REFERENCE pointing to an IS_ARRAY. */
 	HashTable *h;
 	size_t n;
 	zval *d;
@@ -1089,7 +1085,7 @@ inline static int igbinary_serialize_array(struct igbinary_serialize_data *igsd,
 			return 1;
 		}
 
-		// https://wiki.php.net/phpng-int - This is a weak pointer, completely different from a PHP reference (&$foo IS_REFERENCE)
+		/* https://wiki.php.net/phpng-int - This is a weak pointer, completely different from a PHP reference (&$foo has a type of IS_REFERENCE) */
 		if (Z_TYPE_P(d) == IS_INDIRECT) {
 			d = Z_INDIRECT_P(d);
 		}
@@ -1114,24 +1110,20 @@ inline static int igbinary_serialize_array(struct igbinary_serialize_data *igsd,
 inline static int igbinary_serialize_array_ref(struct igbinary_serialize_data *igsd, zval *z, bool object TSRMLS_DC) {
 	uint32_t t = 0;
 	uint32_t *i = &t;
-	zend_ulong key = 0;  // The numeric value of the pointer to the zend_refcounted struct
+	zend_ulong key = 0;  /* The numeric value of the pointer to the zend_refcounted struct */
 
-	// Similar to php_var_serialize_intern's first part, as well as php_add_var_hash, for printing R: (reference) or r:(object)
-	// However, it differs from the built in serialize() in that references to objects are preserved when serializing and unserializing? (TODO check, test for backwards compatibility)
+	/* Similar to php_var_serialize_intern's first part, as well as php_add_var_hash, for printing R: (reference) or r:(object) */
+	/* However, it differs from the built in serialize() in that references to objects are preserved when serializing and unserializing? (TODO check, test for backwards compatibility) */
 	zend_bool is_ref = Z_ISREF_P(z);
-	zend_bool is_object = Z_TYPE_P(z) == IS_OBJECT; // Is the variable being serialized an object or a reference to an object?
-	// Do I have to dereference object references so that reference ids will be the same as in php5?
-	// If I do, then more tests fail.
-	// is_ref || IS_OBJECT implies it has a unique refcounted struct
-	if (object && is_object) {
+	/* Do I have to dereference object references so that reference ids will be the same as in php5? */
+	/* If I do, then more tests fail. */
+	/* is_ref || IS_OBJECT implies it has a unique refcounted struct */
+	if (object && Z_TYPE_P(z) == IS_OBJECT) {
           key = (zend_ulong) Z_OBJ_HANDLE_P(z); // expand uint32_t to long
 	} else if (is_ref) {
 		/* NOTE: PHP removed switched from `zval*` to `zval` for the values stored in HashTables. If an array has two references to the same ZVAL, then those references will have different zvals. We use Z_COUNTED_P(ref), which will be the same iff the references are the same */
 	  	/* IS_REF implies there is a unique reference counting pointer for the reference */
 	  	key = (zend_ulong) (zend_uintptr_t) Z_COUNTED_P(z);
-	  	if (Z_TYPE_P(Z_REFVAL_P(z)) == IS_OBJECT) {
-	  		is_object = true;
-	  	}
 	} else if (Z_TYPE_P(z) == IS_ARRAY) {
 		if (Z_REFCOUNTED_P(z)) {
 			key = (zend_ulong) (zend_uintptr_t) Z_COUNTED_P(z);
@@ -1139,7 +1131,8 @@ inline static int igbinary_serialize_array_ref(struct igbinary_serialize_data *i
 			key = (zend_ulong) (zend_uintptr_t) z;
 		}
 	} else {
-		// Nothing else is going to reference this when this is serialized, this isn't ref counted or an object. Increment the reference id for the deserializer, give up.
+		/* Nothing else is going to reference this when this is serialized, this isn't ref counted or an object, shouldn't be reached. */
+		/* Increment the reference id for the deserializer, give up. */
 		++igsd->references_id;
                 php_error_docref(NULL TSRMLS_CC, E_NOTICE, "igbinary_serialize_array_ref expected either object or reference (param object=%s), got neither (zend_type=%d)", object ? "true" : "false", (int)Z_TYPE_P(z));
 		return 1;
@@ -1147,17 +1140,17 @@ inline static int igbinary_serialize_array_ref(struct igbinary_serialize_data *i
 
 	if (hash_si_find(&igsd->references, (const char*) &key, sizeof(key), i) == 1) {
 		t = igsd->references_id++;
-		// FIXME hack? If the top-level element was an array, we assume that it can't be a reference when we serialize it,
-		// because that's the way it was serialized in php5.
-		// Does this work with different forms of recursive arrays?
-		if (t > 0 || is_object) {
+		/* FIXME hack? If the top-level element was an array, we assume that it can't be a reference when we serialize it, */
+		/* because that's the way it was serialized in php5. */
+		/* Does this work with different forms of recursive arrays? */
+		if (t > 0 || object) {
 			hash_si_insert(&igsd->references, (const char*) &key, sizeof(key), t);  // TODO: Add a specialization for fixed-length numeric keys?
 		}
 		return 1;
 	} else {
 		enum igbinary_type type;
 		if (*i <= 0xff) {
-			type = is_object ? igbinary_type_objref8 : igbinary_type_ref8;
+			type = object ? igbinary_type_objref8 : igbinary_type_ref8;
 			if (igbinary_serialize8(igsd, (uint8_t) type TSRMLS_CC) != 0) {
 				return 1;
 			}
@@ -1166,7 +1159,7 @@ inline static int igbinary_serialize_array_ref(struct igbinary_serialize_data *i
 				return 1;
 			}
 		} else if (*i <= 0xffff) {
-			type = is_object ? igbinary_type_objref16 : igbinary_type_ref16;
+			type = object ? igbinary_type_objref16 : igbinary_type_ref16;
 			if (igbinary_serialize8(igsd, (uint8_t) type TSRMLS_CC) != 0) {
 				return 1;
 			}
@@ -1175,7 +1168,7 @@ inline static int igbinary_serialize_array_ref(struct igbinary_serialize_data *i
 				return 1;
 			}
 		} else {
-			type = is_object ? igbinary_type_objref32 : igbinary_type_ref32;
+			type = object ? igbinary_type_objref32 : igbinary_type_ref32;
 			if (igbinary_serialize8(igsd, (uint8_t) type TSRMLS_CC) != 0) {
 				return 1;
 			}
@@ -1598,7 +1591,7 @@ static int igbinary_serialize_zval(struct igbinary_serialize_data *igsd, zval *z
 		case IS_OBJECT:
 			return igbinary_serialize_object(igsd, z TSRMLS_CC);
 		case IS_ARRAY:
-			// if is_ref, then php5 would have called igbinary_serialize_array_ref
+			/* if is_ref, then php5 would have called igbinary_serialize_array_ref */
 			return igbinary_serialize_array(igsd, z, false, false TSRMLS_CC);
 		case IS_STRING:
 			return igbinary_serialize_string(igsd, Z_STRVAL_P(z), Z_STRLEN_P(z) TSRMLS_CC);
@@ -1938,8 +1931,8 @@ inline static int igbinary_unserialize_chararray(struct igbinary_unserialize_dat
 /* {{{ igbinary_unserialize_array */
 /** Unserializes array. */
 inline static int igbinary_unserialize_array(struct igbinary_unserialize_data *igsd, enum igbinary_type t, zval *z, int flags TSRMLS_DC) {
-	// WANT_OBJECT means that z will be an object (if dereferenced)
-	// WANT_REF means that z will be wrapped by an IS_REFERENCE
+	/* WANT_OBJECT means that z will be an object (if dereferenced) */
+	/* WANT_REF means that z will be wrapped by an IS_REFERENCE */
 	size_t n;
 	size_t i;
 
@@ -1987,7 +1980,7 @@ inline static int igbinary_unserialize_array(struct igbinary_unserialize_data *i
 	if ((flags & WANT_OBJECT) == 0) {
 		array_init_size(z, n + 1);
 
-		// FIXME Are there cases where WANT_REF is necessary? Trying to preserve php5 compatibility.
+		/* FIXME Are there cases where WANT_REF is necessary? Trying to preserve php5 compatibility. */
 		/* if (flags & WANT_REF) { */
 			/* references */
 		if (igsd_append_ref(igsd, z) == SIZE_MAX) {
@@ -2273,7 +2266,7 @@ inline static int igbinary_unserialize_object(struct igbinary_unserialize_data *
 				r = 1;
 				break;
 			}
-			// TODO: This should be dereferenced if necessary
+			/* TODO: This should be dereferenced if necessary */
 			if (incomplete_class) {
 				php_store_class_name(IGB_REF_VAL(igsd, ref_n), name, name_len);
 			}
