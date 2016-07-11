@@ -1018,10 +1018,6 @@ inline static int igbinary_serialize_array(struct igbinary_serialize_data *igsd,
 	zend_string *key;
 	ulong key_index;
 	
-	if (Z_ISREF_P(z)) {
-		ZVAL_DEREF(z); 
-	}
-
 	/* hash */
 	h = object ? Z_OBJPROP_P(z) : HASH_OF(z);
 
