@@ -12,7 +12,8 @@ env:
 
 install:
   - sudo apt-get update -qq
-  - if [ "$VALGRIND" -eq 1 ]; then sudo apt-get install -qq valgrind; export TEST_PHP_ARGS="-m"; fi
+  - export TEST_PHP_ARGS="--show-diff --show-out"
+  - if [ "$VALGRIND" -eq 1 ]; then sudo apt-get install -qq valgrind; export TEST_PHP_ARGS="$TEST_PHP_ARGS -m"; fi
   - sudo apt-get install -qq $CC
   - if [ "$VALGRIND" -eq 1 ]; then valgrind --version; fi
   - $CC --version
@@ -21,7 +22,7 @@ script:
   - phpize
   - ./configure --enable-igbinary
   - make
-  - REPORT_EXIT_STATUS=1 NO_INTERACTION=1 make test TESTS="--show-diff --show-out"
+  - REPORT_EXIT_STATUS=1 NO_INTERACTION=1 make test
 
 branches:
   only:
