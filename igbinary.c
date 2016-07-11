@@ -1600,7 +1600,7 @@ static int igbinary_serialize_zval(struct igbinary_serialize_data *igsd, zval *z
 
 		switch (Z_TYPE_P(Z_REFVAL_P(z))) {
 		case IS_ARRAY:
-			return igbinary_serialize_array(igsd, z, false TSRMLS_CC);
+			return igbinary_serialize_array(igsd, z, false, false TSRMLS_CC);
 		case IS_OBJECT:
 			break; /* Fall through */
 		default:
