@@ -210,7 +210,7 @@ inline static int igbinary_serialize_array(struct igbinary_serialize_data *igsd,
 inline static int igbinary_serialize_array_ref(struct igbinary_serialize_data *igsd, zval *z, bool object TSRMLS_DC);
 inline static int igbinary_serialize_array_sleep(struct igbinary_serialize_data *igsd, zval *z, HashTable *ht, zend_class_entry *ce, bool incomplete_class TSRMLS_DC);
 inline static int igbinary_serialize_object_name(struct igbinary_serialize_data *igsd, const char *name, size_t name_len TSRMLS_DC);
-inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd, zval *z TSRMLS_DC);
+inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd, zval *z, bool already_serialized TSRMLS_DC);
 
 static int igbinary_serialize_zval(struct igbinary_serialize_data *igsd, zval *z TSRMLS_DC);
 /* }}} */
@@ -1010,13 +1010,17 @@ inline static int igbinary_serialize_chararray(struct igbinary_serialize_data *i
 /* {{{ igbinay_serialize_array */
 /** Serializes array or objects inner properties. */
 inline static int igbinary_serialize_array(struct igbinary_serialize_data *igsd, zval *z, bool object, bool incomplete_class TSRMLS_DC) {
-	// z is either IS_ARRAY, or IS_OBJECT. It won't be an IS_REFERENCE pointing to an IS_ARRAY. Those are serialized in a different step.
+	// z is either IS_ARRAY, or IS_OBJECT, or IS_REFERENCE pointing to an IS_ARRAY. Those are serialized in a different step.
 	HashTable *h;
 	size_t n;
 	zval *d;
+	zval *z_original;
 
 	zend_string *key;
 	ulong key_index;
+	
+	z_original = z;
+	ZVAL_DEREF(z);
 	
 	/* hash */
 	h = object ? Z_OBJPROP_P(z) : HASH_OF(z);
@@ -1029,7 +1033,7 @@ inline static int igbinary_serialize_array(struct igbinary_serialize_data *igsd,
 		--n;
 	}
 
-	if (!object && igbinary_serialize_array_ref(igsd, z, false TSRMLS_CC) == 0) {
+	if (!object && igbinary_serialize_array_ref(igsd, z_original, false TSRMLS_CC) == 0) {
 		return 0;
 	}
 
@@ -1430,7 +1434,7 @@ inline static int igbinary_serialize_object_name(struct igbinary_serialize_data 
 /** Serialize object.
  * @see ext/standard/var.c
  * */
-inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd, zval *z TSRMLS_DC) {
+inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd, zval *z, bool already_serialized, TSRMLS_DC) {
 	PHP_CLASS_ATTRIBUTES;
 
 	zend_class_entry *ce;
@@ -1444,7 +1448,7 @@ inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd
 	size_t serialized_len;
 
 
-	if (igbinary_serialize_array_ref(igsd, z, true TSRMLS_CC) == 0) {
+	if (!already_serialized && igbinary_serialize_array_ref(igsd, z, true TSRMLS_CC) == 0) {
 		return 0;
 	}
 
@@ -1583,7 +1587,8 @@ inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd
 /* {{{ igbinary_serialize_zval */
 /** Serialize zval. */
 static int igbinary_serialize_zval(struct igbinary_serialize_data *igsd, zval *z TSRMLS_DC) {
-	if (Z_ISREF_P(z)) {
+	bool is_ref = Z_ISREF_P(z);
+	if (is_ref) {
 #ifdef DEBUG_SERIALIZATION
 		printf("\nserializing reference is_ref=yes");
 #endif
@@ -1591,20 +1596,26 @@ static int igbinary_serialize_zval(struct igbinary_serialize_data *igsd, zval *z
 			return 1;
 		}
 
-		/* Complex types serialize a reference, scalars do not... */
-		/* FIXME: Absolutely wrong level to check this. */
-		if (igbinary_serialize_array_ref(igsd, z, false TSRMLS_CC) == 0) {
-			return 0;
+		switch (Z_TYPE_P(Z_REFVAL_P(z))) {
+		case IS_ARRAY:
+			return igbinary_serialize_array(igsd, z, false TSRMLS_CC);
+		default:
+			/* Serialize a reference if zval already added */
+			if (igbinary_serialize_array_ref(igsd, z, false TSRMLS_CC) == 0) {
+				return 0;
+			}		
 		}
+
 		ZVAL_DEREF(z);
 	}
 	switch (Z_TYPE_P(z)) {
 		case IS_RESOURCE:
 			return igbinary_serialize_null(igsd TSRMLS_CC);
 		case IS_OBJECT:
-			return igbinary_serialize_object(igsd, z TSRMLS_CC);
+			return igbinary_serialize_object(igsd, z, is_ref TSRMLS_CC);
 		case IS_ARRAY:
-			return igbinary_serialize_array(igsd, z, false, false TSRMLS_CC);
+			// if is_ref, then php5 would have called igbinary_serialize_array_ref
+			return igbinary_serialize_array(igsd, z, false TSRMLS_CC);
 		case IS_STRING:
 			return igbinary_serialize_string(igsd, Z_STRVAL_P(z), Z_STRLEN_P(z) TSRMLS_CC);
 		case IS_LONG:
