@@ -1133,7 +1133,9 @@ inline static int igbinary_serialize_array_ref(struct igbinary_serialize_data *i
           printf("\nSerializing object=true key(object handle)=%lld\n", (long long) key);
 #endif
 	} else if (is_ref) {
-	  	key = (zend_ulong) (zend_uintptr_t) z;
+		/* NOTE: PHP removed switched from `zval*` to `zval` for the values stored in HashTables. If an array has two references to the same ZVAL, then those references will have different zvals. We use Z_COUNTED_P(ref), which will be the same iff the references are the same */
+	  	/* IS_REF implies there is a unique reference counting pointer for the reference */
+	  	key = (zend_ulong) (zend_uintptr_t) Z_COUNTED_P(z);
 	  	if (Z_TYPE_P(Z_REFVAL_P(z)) == IS_OBJECT) {
 	  		is_object = true;
 	  	}
@@ -1142,8 +1144,7 @@ inline static int igbinary_serialize_array_ref(struct igbinary_serialize_data *i
 #endif
 	/* } */
 	} else if (Z_TYPE_P(z) == IS_ARRAY) {
-		// igbinary_serialize_array calls this, whether or not this is a reference or not.
-		key = (zend_ulong) (zend_uintptr_t) z;
+		key = (zend_ulong) (zend_uintptr_t) Z_COUNTED_P(z);
 	} else {
 		// Nothing else is going to reference this when this is serialized, this isn't ref counted or an object. Increment the reference id for the deserializer, give up.
 		++igsd->references_id;
