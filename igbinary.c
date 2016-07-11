@@ -378,8 +378,8 @@ PHP_MINFO_FUNCTION(igbinary) {
 /* }}} */
 
 /* {{{ igsd management */
-// Append to list of references to take out later
-static inline int igsd_append_ref(struct igbinary_unserialize_data *igsd, zval *z)
+/* Append to list of references to take out later. Returns SIZE_MAX on allocation error. */
+static inline size_t igsd_append_ref(struct igbinary_unserialize_data *igsd, zval *z)
 {
 	size_t ref_n;
 	if (igsd->references_count + 1 >= igsd->references_capacity) {
@@ -389,7 +389,7 @@ static inline int igsd_append_ref(struct igbinary_unserialize_data *igsd, zval *
 
 		igsd->references = erealloc(igsd->references, sizeof(igsd->references[0]) * igsd->references_capacity);
 		if (igsd->references == NULL) {
-			return -1;
+			return SIZE_MAX;
 		}
 	}
 
@@ -1990,7 +1990,7 @@ inline static int igbinary_unserialize_array(struct igbinary_unserialize_data *i
 		// FIXME Are there cases where WANT_REF is necessary? Trying to preserve php5 compatibility.
 		/* if (flags & WANT_REF) { */
 			/* references */
-		if (igsd_append_ref(igsd, z) == -1) {
+		if (igsd_append_ref(igsd, z) == SIZE_MAX) {
 			return 1;
 		}
 		/* } */
@@ -2259,7 +2259,7 @@ inline static int igbinary_unserialize_object(struct igbinary_unserialize_data *
 
 	/* reference */
 	ref_n = igsd_append_ref(igsd, z);
-	if (ref_n == -1) {
+	if (ref_n == SIZE_MAX) {
 		return 1;
 	}
 
@@ -2421,7 +2421,7 @@ static int igbinary_unserialize_zval(struct igbinary_unserialize_data *igsd, zva
 				case IS_FALSE:
 				case IS_TRUE:
 					/* reference */
-					if (igsd_append_ref(igsd, z) == -1) {
+					if (igsd_append_ref(igsd, z) == SIZE_MAX) {
 						return 1;
 					}
 					break;
