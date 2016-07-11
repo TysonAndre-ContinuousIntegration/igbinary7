@@ -210,7 +210,7 @@ inline static int igbinary_serialize_array(struct igbinary_serialize_data *igsd,
 inline static int igbinary_serialize_array_ref(struct igbinary_serialize_data *igsd, zval *z, bool object TSRMLS_DC);
 inline static int igbinary_serialize_array_sleep(struct igbinary_serialize_data *igsd, zval *z, HashTable *ht, zend_class_entry *ce, bool incomplete_class TSRMLS_DC);
 inline static int igbinary_serialize_object_name(struct igbinary_serialize_data *igsd, const char *name, size_t name_len TSRMLS_DC);
-inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd, zval *z, bool already_serialized TSRMLS_DC);
+inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd, zval *z TSRMLS_DC);
 
 static int igbinary_serialize_zval(struct igbinary_serialize_data *igsd, zval *z TSRMLS_DC);
 /* }}} */
@@ -1436,7 +1436,7 @@ inline static int igbinary_serialize_object_name(struct igbinary_serialize_data 
 /** Serialize object.
  * @see ext/standard/var.c
  * */
-inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd, zval *z, bool already_serialized TSRMLS_DC) {
+inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd, zval *z TSRMLS_DC) {
 	PHP_CLASS_ATTRIBUTES;
 
 	zend_class_entry *ce;
@@ -1450,7 +1450,7 @@ inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd
 	size_t serialized_len;
 
 
-	if (!already_serialized && igbinary_serialize_array_ref(igsd, z, true TSRMLS_CC) == 0) {
+	if (igbinary_serialize_array_ref(igsd, z, true TSRMLS_CC) == 0) {
 		return 0;
 	}
 
@@ -1589,8 +1589,7 @@ inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd
 /* {{{ igbinary_serialize_zval */
 /** Serialize zval. */
 static int igbinary_serialize_zval(struct igbinary_serialize_data *igsd, zval *z TSRMLS_DC) {
-	bool is_ref = Z_ISREF_P(z);
-	if (is_ref) {
+	if (Z_ISREF_P(z)) {
 #ifdef DEBUG_SERIALIZATION
 		printf("\nserializing reference is_ref=yes");
 #endif
@@ -1617,7 +1616,7 @@ static int igbinary_serialize_zval(struct igbinary_serialize_data *igsd, zval *z
 		case IS_RESOURCE:
 			return igbinary_serialize_null(igsd TSRMLS_CC);
 		case IS_OBJECT:
-			return igbinary_serialize_object(igsd, z, is_ref TSRMLS_CC);
+			return igbinary_serialize_object(igsd, z TSRMLS_CC);
 		case IS_ARRAY:
 			// if is_ref, then php5 would have called igbinary_serialize_array_ref
 			return igbinary_serialize_array(igsd, z, false, false TSRMLS_CC);
