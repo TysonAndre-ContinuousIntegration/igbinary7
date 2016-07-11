@@ -1010,13 +1010,14 @@ inline static int igbinary_serialize_chararray(struct igbinary_serialize_data *i
 /* {{{ igbinay_serialize_array */
 /** Serializes array or objects inner properties. */
 inline static int igbinary_serialize_array(struct igbinary_serialize_data *igsd, zval *z, bool object, bool incomplete_class TSRMLS_DC) {
+	// z is either IS_ARRAY, or IS_OBJECT. It won't be an IS_REFERENCE pointing to an IS_ARRAY. Those are serialized in a different step.
 	HashTable *h;
 	size_t n;
 	zval *d;
 
 	zend_string *key;
 	ulong key_index;
-
+	
 	/* hash */
 	h = object ? Z_OBJPROP_P(z) : HASH_OF(z);
 
@@ -1028,7 +1029,7 @@ inline static int igbinary_serialize_array(struct igbinary_serialize_data *igsd,
 		--n;
 	}
 
-	if (!object && igbinary_serialize_array_ref(igsd, z, object TSRMLS_CC) == 0) {
+	if (!object && igbinary_serialize_array_ref(igsd, z, false TSRMLS_CC) == 0) {
 		return 0;
 	}
 
@@ -1131,10 +1132,13 @@ inline static int igbinary_serialize_array_ref(struct igbinary_serialize_data *i
           printf("\nUsing regular ref is_ref=%d type=%d key=%lld\n", (int)Z_ISREF_P(z), (int)Z_TYPE_P(z), (long long) key);
 #endif
 	/* } */
+	} else if (Z_TYPE_P(z) == IS_ARRAY) {
+		// igbinary_serialize_array calls this, whether or not this is a reference or not.
+		key = (zend_ulong) (zend_uintptr_t) Z_ARR_P(z);
 	} else {
 		// Nothing else is going to reference this when this is serialized, this isn't ref counted or an object. Increment the reference id for the deserializer, give up.
 		++igsd->references_id;
-                php_error_docref(NULL TSRMLS_CC, E_NOTICE, "igbinary_serialize_array_ref expected object or reference, got neither");
+                php_error_docref(NULL TSRMLS_CC, E_NOTICE, "igbinary_serialize_array_ref expected object or reference (object=%s), got neither (zend_type=%d)", object ? "true" : "false", (int)Z_TYPE_P(z));
 		return 1;
 	}
 
