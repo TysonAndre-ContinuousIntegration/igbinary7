@@ -1010,7 +1010,8 @@ inline static int igbinary_serialize_chararray(struct igbinary_serialize_data *i
 /* {{{ igbinay_serialize_array */
 /** Serializes array or objects inner properties. */
 inline static int igbinary_serialize_array(struct igbinary_serialize_data *igsd, zval *z, bool object, bool incomplete_class TSRMLS_DC) {
-	// z is either IS_ARRAY, or IS_OBJECT, or IS_REFERENCE pointing to an IS_ARRAY. Those are serialized in a different step.
+	// If object=true: z is IS_OBJECT
+	// If object=false: z is either IS_ARRAY, or IS_REFERENCE pointing to an IS_ARRAY.
 	HashTable *h;
 	size_t n;
 	zval *d;
@@ -1033,6 +1034,7 @@ inline static int igbinary_serialize_array(struct igbinary_serialize_data *igsd,
 		--n;
 	}
 
+	/* if it is an array or a reference to an array, then add a reference unique to that **reference** to that array */ 
 	if (!object && igbinary_serialize_array_ref(igsd, z_original, false TSRMLS_CC) == 0) {
 		return 0;
 	}
@@ -1599,11 +1601,14 @@ static int igbinary_serialize_zval(struct igbinary_serialize_data *igsd, zval *z
 		switch (Z_TYPE_P(Z_REFVAL_P(z))) {
 		case IS_ARRAY:
 			return igbinary_serialize_array(igsd, z, false TSRMLS_CC);
+		case IS_OBJECT:
+			break; /* Fall through */
 		default:
 			/* Serialize a reference if zval already added */
 			if (igbinary_serialize_array_ref(igsd, z, false TSRMLS_CC) == 0) {
 				return 0;
-			}		
+			}
+			/* Fall through */
 		}
 
 		ZVAL_DEREF(z);
