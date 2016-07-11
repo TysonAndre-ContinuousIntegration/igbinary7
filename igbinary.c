@@ -1436,7 +1436,7 @@ inline static int igbinary_serialize_object_name(struct igbinary_serialize_data 
 /** Serialize object.
  * @see ext/standard/var.c
  * */
-inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd, zval *z, bool already_serialized, TSRMLS_DC) {
+inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd, zval *z, bool already_serialized TSRMLS_DC) {
 	PHP_CLASS_ATTRIBUTES;
 
 	zend_class_entry *ce;
