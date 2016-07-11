@@ -1142,13 +1142,16 @@ inline static int igbinary_serialize_array_ref(struct igbinary_serialize_data *i
 #ifdef DEBUG_SERIALIZATION
           printf("\nUsing regular ref is_ref=%d type=%d key=%lld\n", (int)Z_ISREF_P(z), (int)Z_TYPE_P(z), (long long) key);
 #endif
-	/* } */
 	} else if (Z_TYPE_P(z) == IS_ARRAY) {
-		key = (zend_ulong) (zend_uintptr_t) Z_COUNTED_P(z);
+		if (Z_REFCOUNTED_P(z)) {
+			key = (zend_ulong) (zend_uintptr_t) Z_COUNTED_P(z);
+		} else { /* Not sure if this could be a constant */
+			key = (zend_ulong) (zend_uintptr_t) z;
+		}
 	} else {
 		// Nothing else is going to reference this when this is serialized, this isn't ref counted or an object. Increment the reference id for the deserializer, give up.
 		++igsd->references_id;
-                php_error_docref(NULL TSRMLS_CC, E_NOTICE, "igbinary_serialize_array_ref expected object or reference (object=%s), got neither (zend_type=%d)", object ? "true" : "false", (int)Z_TYPE_P(z));
+                php_error_docref(NULL TSRMLS_CC, E_NOTICE, "igbinary_serialize_array_ref expected either object or reference (param object=%s), got neither (zend_type=%d)", object ? "true" : "false", (int)Z_TYPE_P(z));
 		return 1;
 	}
 
@@ -1162,9 +1165,11 @@ inline static int igbinary_serialize_array_ref(struct igbinary_serialize_data *i
 		// FIXME hack? If the top-level element was an array, we assume that it can't be a reference when we serialize it,
 		// because that's the way it was serialized in php5.
 		// Does this work with different forms of recursive arrays?
-		if (t > 0 || is_object) {
-			hash_si_insert(&igsd->references, (const char*) &key, sizeof(key), t);  // TODO: Add a specialization for fixed-length numeric keys?
+		if (t == 0 && !is_object) {
+			php_error_docref("igbinary somehow passed a top level reference to an array");
+			return 1;
 		}
+		hash_si_insert(&igsd->references, (const char*) &key, sizeof(key), t);  // TODO: Add a specialization for fixed-length numeric keys?
 		return 1;
 	} else {
 #ifdef DEBUG_SERIALIZATION
