@@ -1028,7 +1028,7 @@ inline static int igbinary_serialize_array(struct igbinary_serialize_data *igsd,
 		--n;
 	}
 
-	if (!object && igbinary_serialize_array_ref(igsd, z, object TSRMLS_CC) == 0) {
+	if (!object && igbinary_serialize_array_ref(igsd, z, false TSRMLS_CC) == 0) {
 		return 0;
 	}
 
@@ -1134,7 +1134,7 @@ inline static int igbinary_serialize_array_ref(struct igbinary_serialize_data *i
 	} else {
 		// Nothing else is going to reference this when this is serialized, this isn't ref counted or an object. Increment the reference id for the deserializer, give up.
 		++igsd->references_id;
-                php_error_docref(NULL TSRMLS_CC, E_NOTICE, "igbinary_serialize_array_ref expected object or reference, got neither");
+                php_error_docref(NULL TSRMLS_CC, E_NOTICE, "igbinary_serialize_array_ref expected object or reference (object=%s), got neither (zend_type=%d)", object ? "true" : "false", (int)Z_TYPE_P(z));
 		return 1;
 	}
 
