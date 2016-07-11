@@ -6,7 +6,7 @@ if(!extension_loaded('igbinary')) {
 	echo "skip no igbinary";
 }
 --FILE--
-<?php
+<?php 
 
 function test($type, $variable, $test = true) {
 	$serialized = igbinary_serialize($variable);
@@ -22,30 +22,23 @@ function test($type, $variable, $test = true) {
 	ob_start();
 	var_dump($unserialized);
 	$dump_act = ob_get_clean();
-	debug_zval_dump($variable);
-	debug_zval_dump($unserialized);
 
 
 	if ($dump_act !== $dump_exp) {
-		printf("But var dump differs:\nActual\n%sExpected\n%s", $dump_act, $dump_exp);
+		echo "But var dump differs:\n", $dump_act, "\n", $dump_exp, "\n";
 	}
 }
 
 $a = array('foo');
 
 test('array($a, $a)', array($a, $a), true);
-// TODO igbinary is unserializing this incorrectly as [$a, $a] instead of [&$a, &$a].
 test('array(&$a, &$a)', array(&$a, &$a), true);
 
 $a = array(null);
 $b = array(&$a);
 $a[0] = &$b;
 
-// this might also be working properly. print_r() does something serializes as array() if the last reference to $b is removed.
 test('cyclic $a = array(&array(&$a))', $a, false);
-unset($b);
-printf("a = ...\n");
-debug_zval_dump($a);
 
 --EXPECT--
 array($a, $a)
