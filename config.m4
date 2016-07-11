@@ -44,7 +44,7 @@ if test "$PHP_IGBINARY" != "no"; then
   if test ! -z "`$CC --version | grep -i GCC`"; then
     AC_MSG_RESULT(gcc)
     if test -z "`echo $CFLAGS | grep -- -O0`"; then
-      PHP_IGBINARY_CFLAGS="$CFLAGS -Wall -Wpointer-arith -Wmissing-prototypes -Wstrict-prototypes -Wcast-align -Wshadow -Wwrite-strings -Wswitch -Winline -finline-limit=10000 --param large-function-growth=10000 --param inline-unit-growth=10000"
+      PHP_IGBINARY_CFLAGS="$CFLAGS -Wall -Wextra -Wpointer-arith -Wmissing-prototypes -Wstrict-prototypes -Wcast-align -Wshadow -Wwrite-strings -Wswitch -Winline -finline-limit=10000 --param large-function-growth=10000 --param inline-unit-growth=10000"
     fi
   elif test ! -z "`$CC --version | grep -i ICC`"; then
     AC_MSG_RESULT(icc)
