@@ -1620,7 +1620,7 @@ static int igbinary_serialize_zval(struct igbinary_serialize_data *igsd, zval *z
 			return igbinary_serialize_object(igsd, z, is_ref TSRMLS_CC);
 		case IS_ARRAY:
 			// if is_ref, then php5 would have called igbinary_serialize_array_ref
-			return igbinary_serialize_array(igsd, z, false TSRMLS_CC);
+			return igbinary_serialize_array(igsd, z, false, false TSRMLS_CC);
 		case IS_STRING:
 			return igbinary_serialize_string(igsd, Z_STRVAL_P(z), Z_STRLEN_P(z) TSRMLS_CC);
 		case IS_LONG:
