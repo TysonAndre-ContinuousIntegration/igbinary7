@@ -6,13 +6,11 @@ php:
 install:
   - sudo apt-get update -qq
   - export TEST_PHP_ARGS="--show-diff --show-out"
-  - if [ "$VALGRIND" -eq 1 ]; then sudo apt-get install -qq valgrind; export TEST_PHP_ARGS="$TEST_PHP_ARGS -m"; fi
+  - export CC=gcc-4.6 CFLAGS="-g -O0 -fstack-protector -fstack-protector-all"
   - sudo apt-get install -qq $CC
-  - if [ "$VALGRIND" -eq 1 ]; then valgrind --version; fi
   - $CC --version
 
 script:
-  - export CC=gcc-4.6 CFLAGS="-g -O0 -fstack-protector -fstack-protector-all"
   - phpize
   - ./configure --enable-igbinary
   - make
