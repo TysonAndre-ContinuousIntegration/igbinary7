@@ -1117,7 +1117,7 @@ inline static int igbinary_serialize_array_ref(struct igbinary_serialize_data *i
 	// Similar to php_var_serialize_intern's first part, as well as php_add_var_hash, for printing R: (reference) or r:(object)
 	// However, it differs from the built in serialize() in that references to objects are preserved when serializing and unserializing? (TODO check, test for backwards compatibility)
 	zend_bool is_ref = Z_ISREF_P(z);
-	zend_bool is_object = Z_TYPE_P(z) == IS_OBJECT;
+	zend_bool is_object = Z_TYPE_P(z) == IS_OBJECT; // Is the variable being serialized an object or a reference to an object?
 	// Do I have to dereference object references so that reference ids will be the same as in php5?
 	// If I do, then more tests fail.
 	// is_ref || IS_OBJECT implies it has a unique refcounted struct
@@ -1128,6 +1128,9 @@ inline static int igbinary_serialize_array_ref(struct igbinary_serialize_data *i
 #endif
 	} else if (is_ref) {
 	  key = (zend_ulong) (zend_uintptr_t) Z_COUNTED_P(z);
+	  if (Z_TYPE_P(Z_DEREF_P(z)) == IS_OBJECT) {
+	  	is_object = true;
+	  }
 #ifdef DEBUG_SERIALIZATION
           printf("\nUsing regular ref is_ref=%d type=%d key=%lld\n", (int)Z_ISREF_P(z), (int)Z_TYPE_P(z), (long long) key);
 #endif
@@ -1162,7 +1165,7 @@ inline static int igbinary_serialize_array_ref(struct igbinary_serialize_data *i
 #endif
 		enum igbinary_type type;
 		if (*i <= 0xff) {
-			type = object ? igbinary_type_objref8 : igbinary_type_ref8;
+			type = is_object ? igbinary_type_objref8 : igbinary_type_ref8;
 #ifdef DEBUG_SERIALIZATION
 			printf("\nserializing key=%lld is_ref=%d type=%d igbinary_type=%x\n", (long long)key, (int)is_ref, (int)Z_TYPE_P(z), (int)type);
 #endif
@@ -1174,7 +1177,7 @@ inline static int igbinary_serialize_array_ref(struct igbinary_serialize_data *i
 				return 1;
 			}
 		} else if (*i <= 0xffff) {
-			type = object ? igbinary_type_objref16 : igbinary_type_ref16;
+			type = is_object ? igbinary_type_objref16 : igbinary_type_ref16;
 			if (igbinary_serialize8(igsd, (uint8_t) type TSRMLS_CC) != 0) {
 				return 1;
 			}
@@ -1183,7 +1186,7 @@ inline static int igbinary_serialize_array_ref(struct igbinary_serialize_data *i
 				return 1;
 			}
 		} else {
-			type = object ? igbinary_type_objref32 : igbinary_type_ref32;
+			type = is_object ? igbinary_type_objref32 : igbinary_type_ref32;
 			if (igbinary_serialize8(igsd, (uint8_t) type TSRMLS_CC) != 0) {
 				return 1;
 			}
