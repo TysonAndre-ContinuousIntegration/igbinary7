@@ -15,7 +15,7 @@ function test_cyclic2($type, $variable) {
 
 	echo $type, "\n";
 	echo substr(bin2hex($serialized), 8), "\n";
-	echo $serialize_act === $serialize_exp ? 'OK' : 'ERROR', "\n";
+	echo $unserialized == $variable ? 'OK' : 'ERROR', "\n";
 
 	ob_start();
 	var_dump($variable);
@@ -29,18 +29,19 @@ function test_cyclic2($type, $variable) {
 		echo "(Was normalized)\n";
 	}
 	
-	if (!isset($a[0]) || count($a) != 1) {
-		printf("Unexpected keys: %s\n", array_keys($a));
+	if (!isset($unserialized[0]) || count($unserialized) != 1) {
+		printf("Unexpected keys: %s\n", array_keys($unserialized));
 		return;
-	} else if (!is_array($a)) {
-		printf("\$a[0] is not an array, it is %s", gettype($a));
+	} else if (!is_array($unserialized)) {
+		printf("\$a[0] is not an array, it is %s", gettype($unserialized));
 		return;
 	}
-	$a[0]['test'] = 'foo';
-	if ($a[0][0][0]['test'] !== 'foo') {
+	// Set a key, check for the presense of the key 2 levels deeper (Should find it) and 1 level deeper (Should not find it)
+	$unserialized[0]['test'] = 'foo';
+	if ($unserialized[0][0][0]['test'] !== 'foo') {
 		echo "Expected the unserialized array to be cyclic\n";
 	}
-	if (isset($a[0][0]) && $a[0][0]['test'] === 'foo') {
+	if (isset($unserialized[0][0]['test'])) {
 		echo "Expected the unserialized array to be cyclic AND of cycle depth 2, but cycle depth is 1\n";
 	}
 }
