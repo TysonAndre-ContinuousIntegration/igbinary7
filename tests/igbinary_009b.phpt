@@ -6,7 +6,8 @@ if(!extension_loaded('igbinary')) {
 	echo "skip no igbinary";
 }
 --FILE--
-<?php 
+<?php
+error_reporting(E_ALL|E_STRICT);
 
 // Verify that $type[0] is the same zval as $type[0][0][0], but different from $type[0]
 function test_cyclic2($type, $variable) {
@@ -15,7 +16,8 @@ function test_cyclic2($type, $variable) {
 
 	echo $type, "\n";
 	echo substr(bin2hex($serialized), 8), "\n";
-	echo $unserialized == $variable ? 'OK' : 'ERROR', "\n";
+	// Can't use === or == on two recursive arrays in some cases
+	echo array_keys($unserialized) === array_keys($variable) && array_keys($unserialized[0]) === array_keys($variable[0]) ? 'OK' : 'ERROR', "\n";
 
 	ob_start();
 	var_dump($variable);
