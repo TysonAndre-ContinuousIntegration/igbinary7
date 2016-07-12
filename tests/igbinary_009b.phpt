@@ -58,13 +58,13 @@ unset($a);
 
 $a = null;
 $a = [[&$a]];
-test_cyclic2('cyclic $a = array(array(&$a)) - testing functionality', $a);
-
+test_cyclic2('cyclic $a = array(array(&$a)); $a[0] - testing functionality', $a[0]);
+// $a serializes as 140106001401060025140106000101 - This is a bug, probably exists in php5 as well.
 
 --EXPECT--
 cyclic $a = array(&array(&$a)) - testing functionality
 1401060025140106002514010600250101
 OK
-cyclic $a = array(array(&$a)) - testing functionality
+cyclic $a = array(array(&$a)); $a[0] - testing functionality
 14010600251401060014010600250101
 OK
