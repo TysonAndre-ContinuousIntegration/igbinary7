@@ -8,14 +8,6 @@ if(!extension_loaded('igbinary')) {
 --FILE--
 <?php 
 
-function test_cyclic2_serialization($type, $variable) {
-	
-	$serialized = igbinary_serialize($variable);
-	$unserialized = igbinary_unserialize($serialized);
-	if ($unserialized !== $unserialized[0][0]) {
-		echo "$type Not cyclic\n"
-	} else if ($unserialized === $unserialized[])
-}
 function test($type, $variable, $normalize = false) {
 	$serialized = igbinary_serialize($variable);
 	$unserialized = igbinary_unserialize($serialized);
