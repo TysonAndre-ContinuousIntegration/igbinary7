@@ -12,9 +12,13 @@ function test($type, $variable, $normalize = false) {
 	$serialized = igbinary_serialize($variable);
 	$unserialized = igbinary_unserialize($serialized);
 
+
+	$serialize_act = serialize($unserialized);
+	$serialize_exp = serialize($variable);
+	
 	echo $type, "\n";
 	echo substr(bin2hex($serialized), 8), "\n";
-	echo $unserialized == $variable ? 'OK' : 'ERROR', "\n";
+	echo $serialize_act === $serialize_exp ? 'OK' : 'ERROR', "\n";
 
 	ob_start();
 	var_dump($variable);
@@ -35,8 +39,6 @@ function test($type, $variable, $normalize = false) {
 		}
 	}
 	
-	$serialize_act = serialize($unserialized);
-	$serialize_exp = serialize($variable);
 	if ($serialize_act !== $serialize_exp) {
 		echo "But serialize differs:\nActual:\n", $serialize_act, "\nExpected:\n", $serialize_exp, "\n";
 	}
