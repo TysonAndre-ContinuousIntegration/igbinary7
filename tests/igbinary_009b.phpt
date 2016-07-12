@@ -25,21 +25,20 @@ function test_cyclic2($type, $variable) {
 	$dump_act = ob_get_clean();
 
 	if (preg_replace('/&array/', 'array', $dump_act) !== preg_replace('/&array/', 'array', $dump_exp)) {
-		  echo "But var dump differs:\nActual:\n", $dump_act, "\nExpected\n", $dump_exp, "\n";
-			echo "(Was normalized)\n";
-		}
+		echo "But var dump differs:\nActual:\n", $dump_act, "\nExpected\n", $dump_exp, "\n";
+		echo "(Was normalized)\n";
 	}
 	
 	if (!isset($a[0]) || count($a) != 1) {
-	  printf("Unexpected keys: %s\n", array_keys($a));
-	  return;
+		printf("Unexpected keys: %s\n", array_keys($a));
+		return;
 	} else if (!is_array($a)) {
-	  printf("\$a[0] is not an array, it is %s", gettype($a));
-	  return;
+		printf("\$a[0] is not an array, it is %s", gettype($a));
+		return;
 	}
 	$a[0]['test'] = 'foo';
 	if ($a[0][0][0]['test'] !== 'foo') {
-	  echo "Expected the unserialized array to be cyclic\n";
+		echo "Expected the unserialized array to be cyclic\n";
 	}
 	if (isset($a[0][0]) && $a[0][0]['test'] === 'foo') {
 		echo "Expected the unserialized array to be cyclic AND of cycle depth 2, but cycle depth is 1\n";
