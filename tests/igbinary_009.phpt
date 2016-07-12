@@ -55,10 +55,11 @@ $a[0] = &$b;
 unset($b);
 $a = [[&$a]];
 
-test('cyclic $a = array(&array(&$a))', $a, true);
+test('cyclic $a = array(array(&$a))', $a, true);
 unset($a);
 unset($b);
-$a = null;
+
+$a = [null];
 $a = [[&$a]];
 test('cyclic $a = array(array(&$a))', $a);
 --EXPECT--
@@ -68,9 +69,9 @@ OK
 array(&$a, &$a)
 1402060025140106001103666f6f0601250101
 OK
-cyclic $a = array(&array(&$a))
+cyclic $a = array(array(&$a))
 1401060025140106002514010600250101
 OK
-cyclic $a = array(array(&$a))
+cyclic $a = array(array(array(&$a[0])))
 140106001401060025140106000101
 OK
