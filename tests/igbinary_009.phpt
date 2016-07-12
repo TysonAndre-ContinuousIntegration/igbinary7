@@ -23,7 +23,7 @@ function test($type, $variable, $test = true) {
 	var_dump($unserialized);
 	$dump_act = ob_get_clean();
 
-
+	
 	if ($dump_act !== $dump_exp) {
 		echo "But var dump differs:\n", $dump_act, "\n", $dump_exp, "\n";
 	}
@@ -37,6 +37,8 @@ test('array(&$a, &$a)', array(&$a, &$a), true);
 $a = array(null);
 $b = array(&$a);
 $a[0] = &$b;
+unset($b);
+$a = [[&$a]];
 
 test('cyclic $a = array(&array(&$a))', $a, false);
 
