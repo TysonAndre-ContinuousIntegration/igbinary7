@@ -8,13 +8,21 @@ if(!extension_loaded('igbinary')) {
 --FILE--
 <?php 
 
+function test_cyclic2_serialization($type, $variable) {
+	
+	$serialized = igbinary_serialize($variable);
+	$unserialized = igbinary_unserialize($serialized);
+	if ($unserialized !== $unserialized[0][0]) {
+		echo "$type Not cyclic\n"
+	} else if ($unserialized === $unserialized[])
+}
 function test($type, $variable, $normalize = false) {
 	$serialized = igbinary_serialize($variable);
 	$unserialized = igbinary_unserialize($serialized);
 
 	echo $type, "\n";
 	echo substr(bin2hex($serialized), 8), "\n";
-	echo !$test || $unserialized == $variable ? 'OK' : 'ERROR', "\n";
+	echo $unserialized == $variable ? 'OK' : 'ERROR', "\n";
 
 	ob_start();
 	var_dump($variable);
@@ -29,10 +37,16 @@ function test($type, $variable, $normalize = false) {
 	}
 
 	if ($dump_act !== $dump_exp) {
-		echo "But var dump differs:\n", $dump_act, "\n", $dump_exp, "\n";
+		echo "But var dump differs:\nActual:\n", $dump_act, "\nExpected\n", $dump_exp, "\n";
 		if ($normalize) {
 			echo "(Was normalized)\n";
 		}
+	}
+	
+	$serialize_act = serialize($unserialized);
+	$serialize_exp = serialize($variable);
+	if ($serialize_act !== $serialize_exp) {
+		echo "But serialize differs:\nActual:\n", $serialize_act, "\nExpected:\n", $serialize_exp, "\n";
 	}
 }
 
