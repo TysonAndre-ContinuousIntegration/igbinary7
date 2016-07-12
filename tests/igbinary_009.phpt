@@ -8,7 +8,7 @@ if(!extension_loaded('igbinary')) {
 --FILE--
 <?php 
 
-function test($type, $variable, $test = true) {
+function test($type, $variable, $normalize = false) {
 	$serialized = igbinary_serialize($variable);
 	$unserialized = igbinary_unserialize($serialized);
 
@@ -23,16 +23,23 @@ function test($type, $variable, $test = true) {
 	var_dump($unserialized);
 	$dump_act = ob_get_clean();
 
-	
+	if ($normalize) {
+		$dump_act = preg_replace('/&array/', 'array', $dump_act);
+		$dump_exp = preg_replace('/&array/', 'array', $dump_exp);
+	}
+
 	if ($dump_act !== $dump_exp) {
 		echo "But var dump differs:\n", $dump_act, "\n", $dump_exp, "\n";
+		if ($normalize) {
+			echo "(Was normalized)\n";
+		}
 	}
 }
 
 $a = array('foo');
 
-test('array($a, $a)', array($a, $a), true);
-test('array(&$a, &$a)', array(&$a, &$a), true);
+test('array($a, $a)', [$a, $a]);
+test('array(&$a, &$a)', [&$a, &$a]);
 
 $a = array(null);
 $b = array(&$a);
@@ -40,8 +47,12 @@ $a[0] = &$b;
 unset($b);
 $a = [[&$a]];
 
-test('cyclic $a = array(&array(&$a))', $a, false);
-
+test('cyclic $a = array(&array(&$a))', $a, true);
+unset($a);
+unset($b);
+$a = null;
+$a = [[&$a]];
+test('cyclic $a = array(array(&$a))', $a);
 --EXPECT--
 array($a, $a)
 14020600140106001103666f6f06010101
@@ -51,4 +62,7 @@ array(&$a, &$a)
 OK
 cyclic $a = array(&array(&$a))
 1401060025140106002514010600250101
+OK
+cyclic $a = array(array(&$a))
+140106001401060025140106000101
 OK
